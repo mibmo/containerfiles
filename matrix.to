@@ -1,0 +1,22 @@
+ARG VERSION=a
+
+FROM docker.io/alpine:latest AS builder
+WORKDIR /builder
+
+RUN apk add git yarn
+RUN git clone https://github.com/matrix-org/matrix.to && cd matrix.to
+RUN yarn install --release
+CMD ["yarn", "start"]
+
+FROM docker.io/alpine:latest
+
+RUN apk add thttpd
+
+RUN adduser -D static
+USER static
+WORKDIR /home/static
+
+COPY --from=builder /builder/* .
+
+EXPOSE 3000
+CMD ["thttpd", "-D", "-h", "0.0.0.0", "-p", "3000", "-d", "/home/static", "-u", "static", "-l", "-", "-M", "60"]
