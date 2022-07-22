@@ -1,0 +1,41 @@
+name: Build images
+on:
+  push:
+  schedule:
+    - cron: '20 4 */1 * *'
+
+env:
+  registry: ghcr.io
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        containerfile:
+          - matrix.to
+          - thttpd
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ${{ github.repository_owner }}/${{ matrix.containerfile }}
+          tags: latest ${{ github.sha }}
+          containerfiles: ./${{ matrix.containerfile }}
+
+      - name: Push to registry
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
