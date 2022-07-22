@@ -1,0 +1,9 @@
+FROM docker.io/alpine:latest
+
+RUN apk add thttpd
+
+RUN adduser -D static
+USER static
+
+EXPOSE 3000
+CMD ["thttpd", "-D", "-h", "0.0.0.0", "-p", "3000", "-d", "/data/", "-u", "static", "-l", "-", "-M", "60"]
